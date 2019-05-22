@@ -4,6 +4,7 @@ module Adapter = {
   let idb = "idb";
   let leveldb = "leveldb";
   let http = "http";
+  let memory = "memory";
 };
 
 type makeOptions;
@@ -15,6 +16,8 @@ type t;
   ~adapter: Adapter.t=?,
   ~revs_limit: int=?,
   ~deterministic_revs: bool=?,
+  ~auth: {. "username": string, "password": string}=?,
+  ~skip_setup: bool=?,
   unit,
 ) => makeOptions = "";
 
@@ -22,9 +25,11 @@ type t;
 
 let make(
   ~adapter=?,
+  ~auth=?,
   ~auto_compaction=?,
   ~deterministic_revs=?,
   ~revs_limit=?,
+  ~skip_setup=?,
   name,
 ) = make(makeOptions(
   ~name,
@@ -32,5 +37,25 @@ let make(
   ~adapter?,
   ~revs_limit?,
   ~deterministic_revs?,
+  ~auth?,
+  ~skip_setup?,
   ()),
+);
+
+[@bs.send] external destroy: t => Js.Promise.t({. "ok": bool}) = "";
+
+module Document = PouchDB__Document;
+
+[@bs.send.pipe: t] external put: (
+  Document.t,
+  option({. "force": bool}),
+) => Js.Promise.t({. "ok": bool, "id": string, "rev": string}) = "";
+
+let put(~force=?, document, db) = put(
+  document,
+  switch (force) {
+  | Some(force) => Some({"force": force})
+  | None => None
+  },
+  db,
 );
