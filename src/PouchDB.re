@@ -46,10 +46,12 @@ let make(
 
 module Document = PouchDB__Document;
 
+type putResponse = {. "ok": bool, "id": string, "rev": string};
+
 [@bs.send.pipe: t] external put: (
   Document.t,
   option({. "force": bool}),
-) => Js.Promise.t({. "ok": bool, "id": string, "rev": string}) = "";
+) => Js.Promise.t(putResponse) = "";
 
 let put(~force=?, document, db) = put(
   document,
@@ -59,3 +61,5 @@ let put(~force=?, document, db) = put(
   },
   db,
 );
+
+[@bs.send.pipe: t] external post: Js.Json.t => Js.Promise.t(putResponse) = "";
